@@ -112,6 +112,50 @@ def calc_tools(id):
 		calc = [('nodata', 0, 0), ('nodata', 0, 0), ('nodata', 0, 0), ('nodata', 0, 0), ('nodata', 0, 0), ('nodata', 0, 0), ('nodata', 0, 0)]
 	return calc
 
+def housedata_final(name):
+	print('start housedata_final')
+	f = open(name, 'r')
+	f2 = open(DIR + 'housedata_final_test.csv', 'w')
+	count = 0
+	for i in f:
+		s = i.split(',')
+		try:
+			int(s[2])
+			f2.write(s[2] + ',' + s[0].strip('"') + ',' + s[1] + '\n')
+			count += 1
+		except:
+			print('nodata')
+	f2.close()
+	return count
+
+def to_house_final(name):
+	time = str(datetime.now())
+	print('start to_house_final')
+	f = open(name, 'r')
+	f2 = open(DIR + 'house_parse_data_errors_' + str(time) +'.csv', 'w')
+	f3 = open(DIR + 'house_final_' + str(time) + '_.csv', 'w')
+	errors_count = 0
+	complete_count = 0
+	for i in f:
+		s = i.split(',')
+		print(s)
+		try:
+			if (('timeout' in s)or('connection error' in s)or('timeout\n' in s)or('connection error\n' in s)):
+				f2.write(s[0].strip('\n') + ',' + s[1].strip('\n') + ',' + s[2].strip('\n') + '\n')
+				errors_count += 1
+			else:
+				if not('nodata' in s):
+					f3.write(s[0])
+					for i in s[1:]:
+						f3.write(',' + str(i))
+					f3.write('\n')
+					complete_count += 1
+		except IndexError:
+			print('error')
+	f2.close()
+	f3.close()
+	return errors_count, complete_count
+
 def out(name, total, border):
 	try:
 		f = open(name, 'r')
@@ -125,14 +169,14 @@ def out(name, total, border):
 				s = i.split(',')
 				calc = calc_tools(s[0]) 
 				#f2.write( s[0] + ',' + s[1] + ',' + s[2].strip('\n') + ',' + str(d_percent(BASE_URL + s[0])) + '\n')
-				f2.write(s[0] + ',' + s[1] + ',' + s[2].strip('\n') + ',')
+				f2.write(s[0] + ',' + s[1] + ',' + s[2].strip('\n'))
 				for i in calc:
 					for j in i:
-						f2.write(str(j) + ',')
+						f2.write(',' + str(j))
 				f2.write('\n')
 				count += 1
 				speed = datetime.now() - time
-				print('speed:', speed, 'wait:', (float(str(speed).split(':')[2])*(border-count))/60/60, ' h')			
+				print('speed:', speed, 'wait:', (float(str(speed).split(':')[2])*(border-count))/60/60, 'h')			
 	except:
 		f.close()
 		print('ERROR')
@@ -141,52 +185,12 @@ def out(name, total, border):
 	print('END')
 	return count
 
-def housedata_final(name):
-	print('start housedata_final')
-	f = open(name, 'r')
-	f2 = open(DIR + 'housedata_final.csv', 'w')
-	count = 0
-	for i in f:
-		s = i.split(',')
-		try:
-			f2.write(s[2] + ',' + s[0].strip('"') + ',' + s[1] + '\n')
-			count += 1
-		except IndexError:
-			print('nodata')
-			count -= 1
-	f2.close()
-	return count
-
-def to_house_final(name):
-	print('start to_house_final')
-	f = open(name, 'r')
-	f2 = open(DIR + 'house_parse_data_errors.csv', 'w')
-	f3 = open(DIR + 'house_final_' + str(datetime.now()) + '_.csv', 'w')
-	errors_count = 0
-	complete_count = 0
-	for i in f:
-		s = i.split(',')
-		print(s)
-		try:
-			if (('timeout' in s)or('connection error' in s)or('timeout\n' in s)or('connection error\n' in s)):
-				f2.write(s[0].strip('\n') + ',' + s[1].strip('\n') + ',' + s[2].strip('\n') + '\n')
-				errors_count += 1
-			else:
-				for i in s:
-					f3.write(str(i) + ',')
-				f3.write('\n')
-				complete_count += 1
-		except IndexError:
-			print('error')
-	f2.close()
-	f3.close()
-	return errors_count, complete_count
-
 def main():
 	total = housedata_final(DIR + 'housedata.csv')
-	out_total = out(DIR + MAIN_DATA, total, 100)
+	out_total = out(DIR + MAIN_DATA, total, 10)
 	errors, complete = to_house_final(DIR + 'house_parse_data.csv')
-	print('total:', out_total - 1, '\n', 'errors:', errors - 1, '\n', '\n', 'copmlete:', complete - 1, '\n')
+	print()
+	print('total:', out_total - 1, '\n', 'errors:', errors, '\n', 'copmlete:', complete, '\n', 'nodata:~', (out_total - complete)*100/out_total, '%')
 
 
 if __name__ == '__main__':
